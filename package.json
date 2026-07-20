@@ -1,0 +1,26 @@
+{
+  "name": "6452",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+ "scripts": {
+  "test": "jest",
+  "test:data": "jest test/encryption.test.js",
+  "demo:data": "node scripts/dataModuleDemo.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lrp1140926740-boop/6452.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lrp1140926740-boop/6452/issues"
+  },
+  "homepage": "https://github.com/lrp1140926740-boop/6452#readme",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
+}
