@@ -1,28 +1,31 @@
 /**
- * 认证数据源(Accreditation Source)
+ * Accreditation Source
  *
- * 模拟一个链下的「权威认证数据库」:记录每个签发机构(issuer)当前是否仍被认证、
- * 认证有效期、由哪个认证机构颁发。真实世界里这一层可能是政府或行业认证机构的 API,
- * 这里用内存数据 + 可注入的方式模拟,方便独立开发和单元测试。
+ * Simulates an off-chain "authoritative accreditation database": for each issuer it records
+ * whether they are currently accredited, when the accreditation expires, and which body
+ * issued it. In the real world this layer might be a government or industry accreditation
+ * authority's API; here we model it with in-memory, injectable data so the module can be
+ * developed and unit-tested in isolation.
  *
- * 预言机(AccreditationOracle)会调用本模块,把「机构是否仍被认证」的结论喂给链上。
+ * The AccreditationOracle calls this module to feed "is the issuer still accredited?" to the
+ * chain.
  */
 
-// 认证状态码
+// Accreditation status codes
 const STATUS = {
-  ACCREDITED: 'ACCREDITED', // 认证有效
-  NOT_FOUND: 'NOT_FOUND', // 数据源里查无此机构
-  REVOKED: 'REVOKED', // 认证已被吊销
-  EXPIRED: 'EXPIRED', // 认证已过期
+  ACCREDITED: 'ACCREDITED', // accreditation is valid
+  NOT_FOUND: 'NOT_FOUND', // issuer not present in the source
+  REVOKED: 'REVOKED', // accreditation has been revoked
+  EXPIRED: 'EXPIRED', // accreditation has expired
 };
 
 class AccreditationSource {
   /**
-   * @param {Array<object>} records - 初始机构记录数组,元素形如:
+   * @param {Array<object>} records - initial issuer records, each shaped like:
    *   { issuerId, accredited, validUntil, body }
    */
   constructor(records = []) {
-    // 用 Map 以 issuerId 为键存储,查询更快
+    // Keyed by issuerId in a Map for fast lookup
     this._db = new Map();
     for (const r of records) {
       this.upsertIssuer(r);
@@ -30,20 +33,20 @@ class AccreditationSource {
   }
 
   /**
-   * 新增或更新一个机构的认证记录
+   * Insert or update an issuer's accreditation record
    * @param {object} record
-   * @param {string} record.issuerId - 机构唯一标识(地址或名称)
-   * @param {boolean} [record.accredited=true] - 是否被认证
-   * @param {number} [record.validUntil=Infinity] - 认证有效期(毫秒时间戳)
-   * @param {string} [record.body='Unknown'] - 颁发认证的机构名
+   * @param {string} record.issuerId - unique issuer identifier (address or name)
+   * @param {boolean} [record.accredited=true] - whether the issuer is accredited
+   * @param {number} [record.validUntil=Infinity] - accreditation expiry (ms timestamp)
+   * @param {string} [record.body='Unknown'] - name of the accrediting body
    */
   upsertIssuer(record) {
     if (!record || !record.issuerId) {
-      throw new Error('机构记录必须包含 issuerId');
+      throw new Error('An issuer record must include issuerId');
     }
     this._db.set(record.issuerId, {
       issuerId: record.issuerId,
-      accredited: record.accredited !== false, // 默认 true
+      accredited: record.accredited !== false, // defaults to true
       validUntil: record.validUntil ?? Infinity,
       body: record.body ?? 'Unknown',
       revokedReason: record.revokedReason ?? null,
@@ -51,21 +54,21 @@ class AccreditationSource {
   }
 
   /**
-   * 吊销某机构的认证
+   * Revoke an issuer's accreditation
    * @param {string} issuerId
-   * @param {string} [reason] - 吊销原因
+   * @param {string} [reason] - reason for revocation
    */
-  revoke(issuerId, reason = '未说明原因') {
+  revoke(issuerId, reason = 'No reason given') {
     const rec = this._db.get(issuerId);
     if (!rec) {
-      throw new Error(`机构不存在,无法吊销: ${issuerId}`);
+      throw new Error(`Issuer not found, cannot revoke: ${issuerId}`);
     }
     rec.accredited = false;
     rec.revokedReason = reason;
   }
 
   /**
-   * 查询原始记录
+   * Look up the raw record
    * @param {string} issuerId
    * @returns {object|null}
    */
@@ -74,9 +77,9 @@ class AccreditationSource {
   }
 
   /**
-   * 判断某机构在给定时刻是否仍被认证 —— 预言机的核心判据
+   * Decide whether an issuer is still accredited at a given time — the oracle's core rule
    * @param {string} issuerId
-   * @param {number} [now=Date.now()] - 判断的时间点(毫秒),测试时可传固定值
+   * @param {number} [now=Date.now()] - evaluation time (ms); pass a fixed value in tests
    * @returns {{ accredited: boolean, status: string, detail: object|null }}
    */
   checkAccreditation(issuerId, now = Date.now()) {

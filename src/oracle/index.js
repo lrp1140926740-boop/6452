@@ -1,9 +1,10 @@
 /**
- * 认证预言机模块 —— 统一入口
+ * Accreditation Oracle module — unified entry point
  *
- * 成员 E 负责的「预言机」部分。当前为自包含实现:核心逻辑 + 数据源 + 链适配器抽象,
- * 可独立运行和单元测试;「真实上链」部分(EthersChainAdapter)预留接口,
- * 等成员 B 的 AuthorisedIssuerRegistry.sol 就绪后对接。
+ * Member E's "oracle" part. Currently a self-contained implementation: core logic + data
+ * source + chain-adapter abstraction, runnable and unit-testable in isolation. The "real
+ * on-chain" part (EthersChainAdapter) is left as an interface, to be wired up once member B's
+ * AuthorisedIssuerRegistry.sol is ready.
  */
 
 const { AccreditationSource, STATUS } = require('./accreditationSource');

@@ -1,11 +1,13 @@
 /**
- * 认证预言机 —— 独立演示脚本
+ * Accreditation Oracle — standalone demo script
  *
- * 运行:node scripts/oracleDemo.js
+ * Run: node scripts/oracleDemo.js
  *
- * 不依赖任何链上合约或组员代码,展示预言机如何:
- *   收到链上认证查询请求 → 查认证数据源 → 把「机构是否仍被认证」写回链上。
- * 等成员 B 的合约就绪后,把 MockChainAdapter 换成 EthersChainAdapter 即可真正上链。
+ * Depends on no on-chain contract or teammate code. It shows how the oracle:
+ *   receives an on-chain accreditation query -> checks the accreditation source ->
+ *   writes "is the issuer still accredited?" back on-chain.
+ * Once member B's contract is ready, swap MockChainAdapter for EthersChainAdapter to go
+ * on-chain for real.
  */
 
 const {
@@ -14,22 +16,22 @@ const {
   MockChainAdapter,
 } = require('../src/oracle');
 
-// 1. 准备认证数据源(模拟权威认证数据库)
+// 1. Prepare the accreditation source (a mock authoritative accreditation database)
 const now = Date.now();
 const ONE_DAY = 24 * 60 * 60 * 1000;
 const source = new AccreditationSource([
   { issuerId: 'UNSW', accredited: true, validUntil: now + 365 * ONE_DAY, body: 'AU-Gov' },
-  { issuerId: 'FakeCollege', accredited: true, validUntil: now - ONE_DAY, body: 'AU-Gov' }, // 认证过期
-  { issuerId: 'BannedInc', accredited: false, validUntil: now + ONE_DAY, body: 'AU-Gov' }, // 认证吊销
+  { issuerId: 'FakeCollege', accredited: true, validUntil: now - ONE_DAY, body: 'AU-Gov' }, // expired
+  { issuerId: 'BannedInc', accredited: false, validUntil: now + ONE_DAY, body: 'AU-Gov' }, // revoked
 ]);
 
-// 2. 创建预言机 + 链适配器(演示用 Mock)
+// 2. Create the oracle + chain adapter (Mock for the demo)
 const oracle = new AccreditationOracle(source);
 const adapter = new MockChainAdapter();
 oracle.start(adapter);
 
-// 3. 模拟链上合约发来若干认证查询请求
-console.log('=== 认证预言机演示 ===\n');
+// 3. Simulate several accreditation query requests coming from the on-chain contract
+console.log('=== Accreditation Oracle demo ===\n');
 const queries = [
   ['req-1', 'UNSW'],
   ['req-2', 'FakeCollege'],
@@ -38,10 +40,10 @@ const queries = [
 ];
 for (const [requestId, issuerId] of queries) {
   const r = adapter.emitRequest(requestId, issuerId, now);
-  const mark = r.accredited ? '✅ 仍被认证' : '❌ 未认证';
-  console.log(`[${requestId}] 机构 ${issuerId.padEnd(12)} → ${mark}  (${r.status})`);
+  const mark = r.accredited ? 'ACCREDITED' : 'NOT accredited';
+  console.log(`[${requestId}] issuer ${issuerId.padEnd(12)} -> ${mark}  (${r.status})`);
 }
 
-// 4. 展示「写回链上」的内容
-console.log('\n=== 已写回链上的结果(fulfill) ===');
+// 4. Show what was "written back on-chain"
+console.log('\n=== Results written back on-chain (fulfill) ===');
 console.log(JSON.stringify(adapter.fulfilled, null, 2));

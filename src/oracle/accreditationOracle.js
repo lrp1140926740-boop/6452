@@ -1,37 +1,39 @@
 /**
- * 认证预言机(Accreditation Oracle)—— 核心逻辑
+ * Accreditation Oracle — core logic
  *
- * 职责:把链下的「机构是否仍被认证」这一事实,喂给链上合约。
+ * Responsibility: feed the off-chain fact "is this issuer still accredited?" to the chain.
  *
- * 典型工作流(链下预言机服务模式):
- *   1. 链上合约(成员 B 的 AuthorisedIssuerRegistry / 成员 A 的主合约)在需要时
- *      发出一个「认证查询请求」事件;
- *   2. 本预言机监听到请求 → 查认证数据源(AccreditationSource);
- *   3. 把结果通过「链适配器」写回链上(fulfill)。
+ * Typical workflow (off-chain oracle service model):
+ *   1. An on-chain contract (member B's AuthorisedIssuerRegistry / member A's main contract)
+ *      emits an "accreditation query" request event when needed;
+ *   2. This oracle observes the request and queries the accreditation source
+ *      (AccreditationSource);
+ *   3. It writes the result back on-chain through a "chain adapter" (fulfill).
  *
- * 为了不被组员进度卡住,本模块把「和链上合约对接」抽象成 chainAdapter 接口,
- * 现在用 MockChainAdapter 即可独立运行和测试;等成员 B 的合约就绪后,
- * 换成真实的 ethers 适配器即可,核心逻辑无需改动。
+ * To avoid being blocked by teammates' progress, the "talking to the on-chain contract" part
+ * is abstracted behind the chainAdapter interface. Right now MockChainAdapter lets this run
+ * and be tested in isolation; once member B's contract is ready, swap in the real ethers
+ * adapter and the core logic stays unchanged.
  */
 
 const { AccreditationSource } = require('./accreditationSource');
 
 class AccreditationOracle {
   /**
-   * @param {AccreditationSource} source - 认证数据源
+   * @param {AccreditationSource} source - the accreditation data source
    */
   constructor(source) {
     if (!(source instanceof AccreditationSource)) {
-      throw new Error('AccreditationOracle 需要一个 AccreditationSource 实例');
+      throw new Error('AccreditationOracle requires an AccreditationSource instance');
     }
     this.source = source;
   }
 
   /**
-   * 解析单条认证查询 —— 预言机对外的纯函数式核心
+   * Resolve a single accreditation query — the oracle's pure functional core
    * @param {string} issuerId
    * @param {number} [now=Date.now()]
-   * @returns {object} 结构化结果,可直接写回链上
+   * @returns {object} structured result, ready to be written back on-chain
    */
   resolve(issuerId, now = Date.now()) {
     const result = this.source.checkAccreditation(issuerId, now);
@@ -44,14 +46,15 @@ class AccreditationOracle {
   }
 
   /**
-   * 启动预言机服务:绑定链适配器,自动处理链上发来的认证请求
-   * @param {object} chainAdapter - 需实现 onRequest(handler) 与 fulfill(requestId, result)
+   * Start the oracle service: bind a chain adapter and handle on-chain requests automatically
+   * @param {object} chainAdapter - must implement onRequest(handler) and fulfill(requestId, result)
    */
   start(chainAdapter) {
     if (!chainAdapter || typeof chainAdapter.onRequest !== 'function') {
-      throw new Error('chainAdapter 必须实现 onRequest 方法');
+      throw new Error('chainAdapter must implement an onRequest method');
     }
-    // 注册请求处理器:每当链上来一个请求,就查数据源并把结果履行回链上
+    // Register the request handler: for every incoming request, query the source and fulfill
+    // the result back on-chain
     chainAdapter.onRequest((request) => {
       const { requestId, issuerId } = request;
       const result = this.resolve(issuerId, request.now);
