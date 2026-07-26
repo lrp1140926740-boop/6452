@@ -6,7 +6,9 @@
  "scripts": {
   "test": "jest",
   "test:data": "jest test/encryption.test.js",
-  "demo:data": "node scripts/dataModuleDemo.js"
+  "demo:data": "node scripts/dataModuleDemo.js",
+  "test:oracle": "jest test/oracle.test.js",
+  "demo:oracle": "node scripts/oracleDemo.js"
   },
   "repository": {
     "type": "git",
