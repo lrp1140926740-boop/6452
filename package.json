@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "test:data": "jest test/encryption.test.js",
-    "demo:data": "node scripts/dataModuleDemo.js"
+    "demo:data": "node scripts/dataModuleDemo.js",
+    "demo:ipfs": "node scripts/ipfsDemo.js"
   },
   "repository": {
     "type": "git",

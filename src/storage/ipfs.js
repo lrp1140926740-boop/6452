@@ -3,7 +3,7 @@
  *
  */
 
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const { PinataSDK } = require("pinata");
 
@@ -12,8 +12,19 @@ function isNonEmptyString(value) {
 }
 
 function createPinataClient(options = {}) {
-  const jwt = options.jwt || process.env.PINATA_JWT;
-  const gateway = options.gateway || process.env.PINATA_GATEWAY;
+  const jwt = Object.prototype.hasOwnProperty.call(
+    options,
+    "jwt"
+  )
+    ? options.jwt
+    : process.env.PINATA_JWT;
+
+  const gateway = Object.prototype.hasOwnProperty.call(
+    options,
+    "gateway"
+  )
+    ? options.gateway
+    : process.env.PINATA_GATEWAY;
 
   if (!isNonEmptyString(jwt)) {
     throw new Error("PINATA_JWT is not configured");
