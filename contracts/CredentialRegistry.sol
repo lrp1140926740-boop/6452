@@ -48,17 +48,30 @@ contract CredentialRegistry {
             revert InvalidIssuerRegistry();
         }
 
-        issuerRegistry = IIssuerRegistry(issuerRegistryAddress);
+        issuerRegistry = IIssuerRegistry(
+            issuerRegistryAddress
+        );
+    }
+
+    modifier onlyAuthorisedIssuer() {
+        if (
+            !issuerRegistry.isAuthorised(
+                msg.sender
+            )
+        ) {
+            revert NotAuthorisedIssuer();
+        }
+
+        _;
     }
 
     function issueCredential(
         bytes32 credentialHash,
         string calldata cid
-    ) external {
-        if (!issuerRegistry.isAuthorised(msg.sender)) {
-            revert NotAuthorisedIssuer();
-        }
-
+    )
+        external
+        onlyAuthorisedIssuer
+    {
         if (credentialHash == bytes32(0)) {
             revert InvalidCredentialHash();
         }
@@ -67,18 +80,27 @@ contract CredentialRegistry {
             revert EmptyCID();
         }
 
-        if (credentials[credentialHash].exists) {
+        if (
+            credentials[credentialHash].exists
+        ) {
             revert CredentialAlreadyExists();
         }
 
-        credentials[credentialHash] = Credential({
-            credentialHash: credentialHash,
-            issuer: msg.sender,
-            issuedAt: block.timestamp,
-            cid: cid,
-            revoked: false,
-            exists: true
-        });
+        credentials[credentialHash] =
+            Credential({
+                credentialHash:
+                    credentialHash,
+                issuer:
+                    msg.sender,
+                issuedAt:
+                    block.timestamp,
+                cid:
+                    cid,
+                revoked:
+                    false,
+                exists:
+                    true
+            });
 
         emit CredentialIssued(
             credentialHash,
@@ -88,7 +110,9 @@ contract CredentialRegistry {
         );
     }
 
-    function revokeCredential(bytes32 credentialHash) external {
+    function revokeCredential(
+        bytes32 credentialHash
+    ) external {
         Credential storage credential =
             credentials[credentialHash];
 
@@ -96,7 +120,10 @@ contract CredentialRegistry {
             revert CredentialNotFound();
         }
 
-        if (credential.issuer != msg.sender) {
+        if (
+            credential.issuer !=
+            msg.sender
+        ) {
             revert NotCredentialIssuer();
         }
 
@@ -112,7 +139,9 @@ contract CredentialRegistry {
         );
     }
 
-    function verifyCredential(bytes32 credentialHash)
+    function verifyCredential(
+        bytes32 credentialHash
+    )
         external
         view
         returns (
@@ -154,10 +183,14 @@ contract CredentialRegistry {
         );
     }
 
-    function getCredential(bytes32 credentialHash)
+    function getCredential(
+        bytes32 credentialHash
+    )
         external
         view
-        returns (Credential memory)
+        returns (
+            Credential memory
+        )
     {
         Credential memory credential =
             credentials[credentialHash];
