@@ -57,6 +57,27 @@ async function main() {
     await credentialRegistry.getAddress()
   );
 
+  // 4. Demonstrate rejection of an unauthorised issuer
+  const unauthorisedHash =
+    "0x" + "22".repeat(32);
+
+  try {
+    await credentialRegistry
+      .connect(owner)
+      .issueCredential(
+        unauthorisedHash,
+        "bafybeiunauthoriseddemo"
+      );
+
+    console.log(
+      "Unexpected: unauthorised issuer was able to issue"
+    );
+  } catch (error) {
+    console.log(
+      "Unauthorised issuer rejected: true"
+    );
+  }
+
   // Demo values that would normally come
   // from the off-chain VC/IPFS pipeline.
   const credentialHash =
@@ -65,7 +86,7 @@ async function main() {
   const cid =
     "bafybeimockcredential123";
 
-  // 4. Issue credential
+  // 5. Issue credential
   const issueTx =
     await credentialRegistry
       .connect(university)
@@ -78,7 +99,7 @@ async function main() {
 
   console.log("Credential issued");
 
-  // 5. Verify credential
+  // 6. Verify credential before revocation
   let result =
     await credentialRegistry
       .verifyCredential(
@@ -98,7 +119,7 @@ async function main() {
     revoked: result.revoked,
   });
 
-  // 6. Revoke credential
+  // 7. Revoke credential
   const revokeTx =
     await credentialRegistry
       .connect(university)
@@ -110,7 +131,7 @@ async function main() {
 
   console.log("Credential revoked");
 
-  // 7. Verify again
+  // 8. Verify credential after revocation
   result =
     await credentialRegistry
       .verifyCredential(
