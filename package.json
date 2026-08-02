@@ -9,7 +9,8 @@
     "test:contracts": "hardhat test test/contracts/*.test.js",
     "test:all": "npm run test:data && npm run test:contracts",
     "compile": "hardhat compile",
-    "demo:data": "node scripts/dataModuleDemo.js"
+    "demo:data": "node scripts/dataModuleDemo.js",
+    "demo:contracts": "hardhat run scripts/contractInteraction.js"
   },
   "repository": {
     "type": "git",
