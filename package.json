@@ -10,7 +10,9 @@
     "test:all": "npm run test:data && npm run test:contracts",
     "compile": "hardhat compile",
     "demo:data": "node scripts/dataModuleDemo.js",
-    "demo:contracts": "hardhat run scripts/contractInteraction.js"
+    "demo:contracts": "hardhat run scripts/contractInteraction.js",
+    "test:oracle": "jest test/oracle.test.js",
+    "demo:oracle": "node scripts/oracleDemo.js"
   },
   "repository": {
     "type": "git",

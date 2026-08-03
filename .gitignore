@@ -1,12 +1,8 @@
 node_modules/
-
 .env
 .env.*
-
 artifacts/
 cache/
 build/
 dist/
 coverage/
-
-.DS_Store
