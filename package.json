@@ -14,8 +14,8 @@
     "test:oracle": "jest test/oracle.test.js",
     "demo:oracle": "node scripts/oracleDemo.js",
     "demo:oracle-integration": "hardhat run scripts/oracleIntegration.js",
-    "demo:ipfs": "node scripts/ipfsDemo.js"
-
+    "demo:ipfs": "node scripts/ipfsDemo.js",
+    "demo:full": "hardhat run scripts/fullIntegrationDemo.js"
   },
   "repository": {
     "type": "git",
