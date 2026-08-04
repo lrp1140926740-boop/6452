@@ -12,7 +12,10 @@
     "demo:data": "node scripts/dataModuleDemo.js",
     "demo:contracts": "hardhat run scripts/contractInteraction.js",
     "test:oracle": "jest test/oracle.test.js",
-    "demo:oracle": "node scripts/oracleDemo.js"
+    "demo:oracle": "node scripts/oracleDemo.js",
+    "demo:oracle-integration": "hardhat run scripts/oracleIntegration.js",
+    "demo:ipfs": "node scripts/ipfsDemo.js",
+    "demo:full": "hardhat run scripts/fullIntegrationDemo.js"
   },
   "repository": {
     "type": "git",
@@ -34,5 +37,9 @@
     "ethers": "^6.17.0",
     "hardhat": "^2.28.0",
     "jest": "^30.4.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "pinata": "^2.5.6"
   }
 }

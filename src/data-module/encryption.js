@@ -65,12 +65,36 @@ function decryptCredential(encryptedData, password) {
   return JSON.parse(decrypted.toString());
 }
 
+function canonicalize(value) {
+  if (Array.isArray(value)) {
+    return value.map(canonicalize);
+  }
+
+  if (value !== null && typeof value === "object") {
+    const sorted = {};
+
+    Object.keys(value)
+      .sort()
+      .forEach((key) => {
+        sorted[key] = canonicalize(value[key]);
+      });
+
+    return sorted;
+  }
+
+  return value;
+}
 /**
  */
 function hashCredential(data) {
+  const canonicalData =
+    typeof data === "string"
+      ? data
+      : JSON.stringify(canonicalize(data));
+
   return crypto
     .createHash("sha256")
-    .update(JSON.stringify(data))
+    .update(canonicalData, "utf8")
     .digest("hex");
 }
 

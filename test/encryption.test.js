@@ -60,7 +60,22 @@ describe("Encryption module", () => {
       );
     }).toThrow();
   });
+  
+  test("generates identical hash regardless of object key order", () => {
+    const a = {
+        name: "Alice",
+        degree: "IT",
+    };
 
+    const b = {
+        degree: "IT",
+        name: "Alice",
+    };
+
+    expect(hashCredential(a))
+        .toBe(hashCredential(b));
+  });
+  
   test("detects modified ciphertext", () => {
     const encrypted = encryptCredential(
       demoCredential,
