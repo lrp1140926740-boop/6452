@@ -3,17 +3,12 @@
  *
  * Responsibility: feed the off-chain fact "is this issuer still accredited?" to the chain.
  *
- * Typical workflow (off-chain oracle service model):
- *   1. An on-chain contract (member B's AuthorisedIssuerRegistry / member A's main contract)
- *      emits an "accreditation query" request event when needed;
- *   2. This oracle observes the request and queries the accreditation source
- *      (AccreditationSource);
- *   3. It writes the result back on-chain through a "chain adapter" (fulfill).
+ * Interaction model (PUSH): the oracle decides off-chain whether an issuer is still
+ * accredited (via AccreditationSource), then pushes that status on-chain by calling member
+ * B's IssuerRegistry.updateIssuerStatus(address, bool) through a chain adapter.
  *
- * To avoid being blocked by teammates' progress, the "talking to the on-chain contract" part
- * is abstracted behind the chainAdapter interface. Right now MockChainAdapter lets this run
- * and be tested in isolation; once member B's contract is ready, swap in the real ethers
- * adapter and the core logic stays unchanged.
+ * The chain adapter is injected, so the core stays testable offline with MockChainAdapter
+ * and works against the real contract with IssuerRegistryAdapter — the logic is identical.
  */
 
 const { AccreditationSource } = require('./accreditationSource');
@@ -30,15 +25,15 @@ class AccreditationOracle {
   }
 
   /**
-   * Resolve a single accreditation query — the oracle's pure functional core
-   * @param {string} issuerId
-   * @param {number} [now=Date.now()]
-   * @returns {object} structured result, ready to be written back on-chain
+   * Resolve a single accreditation query — the oracle's pure functional core.
+   * @param {string} issuerAddress - the issuer's on-chain address (0x...)
+   * @param {number} [now=Date.now()] - evaluation time (ms); pass a fixed value in tests
+   * @returns {object} { issuerAddress, accredited, status, checkedAt }
    */
-  resolve(issuerId, now = Date.now()) {
-    const result = this.source.checkAccreditation(issuerId, now);
+  resolve(issuerAddress, now = Date.now()) {
+    const result = this.source.checkAccreditation(issuerAddress, now);
     return {
-      issuerId,
+      issuerAddress,
       accredited: result.accredited,
       status: result.status,
       checkedAt: now,
@@ -46,22 +41,34 @@ class AccreditationOracle {
   }
 
   /**
-   * Start the oracle service: bind a chain adapter and handle on-chain requests automatically
-   * @param {object} chainAdapter - must implement onRequest(handler) and fulfill(requestId, result)
+   * Resolve one issuer and push its status on-chain via the adapter.
+   * @param {string} issuerAddress
+   * @param {object} adapter - implements pushStatus(issuerAddress, authorised)
+   * @param {number} [now=Date.now()]
+   * @returns {Promise<object>} the resolved verdict
    */
-  start(chainAdapter) {
-    if (!chainAdapter || typeof chainAdapter.onRequest !== 'function') {
-      throw new Error('chainAdapter must implement an onRequest method');
+  async syncIssuer(issuerAddress, adapter, now = Date.now()) {
+    if (!adapter || typeof adapter.pushStatus !== 'function') {
+      throw new Error('adapter must implement pushStatus(issuerAddress, authorised)');
     }
-    // Register the request handler: for every incoming request, query the source and fulfill
-    // the result back on-chain
-    chainAdapter.onRequest((request) => {
-      const { requestId, issuerId } = request;
-      const result = this.resolve(issuerId, request.now);
-      chainAdapter.fulfill(requestId, result);
-      return result;
-    });
-    this.chainAdapter = chainAdapter;
+    const verdict = this.resolve(issuerAddress, now);
+    await adapter.pushStatus(issuerAddress, verdict.accredited);
+    return verdict;
+  }
+
+  /**
+   * Resolve and push several issuers in one go.
+   * @param {string[]} issuerAddresses
+   * @param {object} adapter
+   * @param {number} [now=Date.now()]
+   * @returns {Promise<object[]>} the resolved verdicts, in the same order
+   */
+  async syncAll(issuerAddresses, adapter, now = Date.now()) {
+    const verdicts = [];
+    for (const issuerAddress of issuerAddresses) {
+      verdicts.push(await this.syncIssuer(issuerAddress, adapter, now));
+    }
+    return verdicts;
   }
 }
 
