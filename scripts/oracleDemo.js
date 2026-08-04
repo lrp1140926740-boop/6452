@@ -1,13 +1,11 @@
 /**
- * Accreditation Oracle — standalone demo script
+ * Accreditation Oracle — standalone offline demo (no chain required)
  *
- * Run: node scripts/oracleDemo.js
+ * Run: node scripts/oracleDemo.js   (or: npm run demo:oracle)
  *
- * Depends on no on-chain contract or teammate code. It shows how the oracle:
- *   receives an on-chain accreditation query -> checks the accreditation source ->
- *   writes "is the issuer still accredited?" back on-chain.
- * Once member B's contract is ready, swap MockChainAdapter for EthersChainAdapter to go
- * on-chain for real.
+ * Shows the oracle deciding, off-chain, whether each issuer is still accredited and pushing
+ * that verdict through a MockChainAdapter (which records what WOULD be written on-chain).
+ * The real on-chain version is scripts/oracleIntegration.js.
  */
 
 const {
@@ -16,34 +14,36 @@ const {
   MockChainAdapter,
 } = require('../src/oracle');
 
-// 1. Prepare the accreditation source (a mock authoritative accreditation database)
 const now = Date.now();
 const ONE_DAY = 24 * 60 * 60 * 1000;
+
+// In production the id is an on-chain address (0x...); readable ids used here for clarity.
 const source = new AccreditationSource([
   { issuerId: 'UNSW', accredited: true, validUntil: now + 365 * ONE_DAY, body: 'AU-Gov' },
   { issuerId: 'FakeCollege', accredited: true, validUntil: now - ONE_DAY, body: 'AU-Gov' }, // expired
   { issuerId: 'BannedInc', accredited: false, validUntil: now + ONE_DAY, body: 'AU-Gov' }, // revoked
 ]);
 
-// 2. Create the oracle + chain adapter (Mock for the demo)
-const oracle = new AccreditationOracle(source);
-const adapter = new MockChainAdapter();
-oracle.start(adapter);
+async function main() {
+  const oracle = new AccreditationOracle(source);
+  const adapter = new MockChainAdapter();
 
-// 3. Simulate several accreditation query requests coming from the on-chain contract
-console.log('=== Accreditation Oracle demo ===\n');
-const queries = [
-  ['req-1', 'UNSW'],
-  ['req-2', 'FakeCollege'],
-  ['req-3', 'BannedInc'],
-  ['req-4', 'UnknownOrg'],
-];
-for (const [requestId, issuerId] of queries) {
-  const r = adapter.emitRequest(requestId, issuerId, now);
-  const mark = r.accredited ? 'ACCREDITED' : 'NOT accredited';
-  console.log(`[${requestId}] issuer ${issuerId.padEnd(12)} -> ${mark}  (${r.status})`);
+  console.log('=== Accreditation Oracle demo (offline) ===\n');
+  const verdicts = await oracle.syncAll(
+    ['UNSW', 'FakeCollege', 'BannedInc', 'UnknownOrg'],
+    adapter,
+    now
+  );
+  for (const v of verdicts) {
+    const mark = v.accredited ? 'ACCREDITED' : 'NOT accredited';
+    console.log(`issuer ${v.issuerAddress.padEnd(12)} -> ${mark}  (${v.status})`);
+  }
+
+  console.log('\n=== What the oracle would push on-chain (updateIssuerStatus) ===');
+  console.log(JSON.stringify(adapter.updates, null, 2));
 }
 
-// 4. Show what was "written back on-chain"
-console.log('\n=== Results written back on-chain (fulfill) ===');
-console.log(JSON.stringify(adapter.fulfilled, null, 2));
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
