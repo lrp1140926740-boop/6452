@@ -1,0 +1,27 @@
+COMP6452 Project 2 - Task 3
+Deployed Contract Addresses
+===========================
+
+Network:   Polygon Amoy Testnet
+Chain ID:  80002
+Explorer:  https://amoy.polygonscan.com
+
+Contracts
+---------
+IssuerRegistry:      0xcC93f684a9CE47920C13678Ce358d0EbdFE84f23
+CredentialRegistry:  0x2ecA539c901006B96a97B996Ef21cc6f089EAcE3
+
+Explorer links
+--------------
+IssuerRegistry:      https://amoy.polygonscan.com/address/0xcC93f684a9CE47920C13678Ce358d0EbdFE84f23
+CredentialRegistry:  https://amoy.polygonscan.com/address/0x2ecA539c901006B96a97B996Ef21cc6f089EAcE3
+
+Notes
+-----
+- CredentialRegistry is deployed with the IssuerRegistry address above as its
+  constructor argument (it queries IssuerRegistry.isAuthorised during verification).
+- The Accreditation Oracle calls IssuerRegistry.updateIssuerStatus(address, bool)
+  to push issuer accreditation status on-chain. Before it can do so, the contract
+  owner must register the oracle account via IssuerRegistry.setOracle(oracleAddress).
+- The demo (npm run demo:full) runs on a local Hardhat network for reproducibility;
+  the same contracts are also deployed on Polygon Amoy at the addresses above.
