@@ -1,50 +1,24 @@
-# COMP6452 Project 2 Task 3 — Data Module
+# COMP6452 Project 2 Task 3
 
-This repository contains the Data Module implemented for COMP6452 Project 2 Task 3.
+## Blockchain-based Academic Credential System
 
-The module is responsible for:
+This repository contains our Task 3 proof-of-concept implementation.
 
-- Off-chain credential encryption and decryption
-- On-chain and off-chain data separation
-- SHA-256 credential hashing
-- Demo credential data
-- Unit testing
-- Providing encrypted credential packages for IPFS integration
+Main components:
 
-## Member Responsibility
+- `CredentialRegistry` and `IssuerRegistry` smart contracts
+- W3C Verifiable Credential processing
+- AES-256-GCM encryption and SHA-256 hashing
+- Pinata IPFS off-chain storage
+- Accreditation Oracle
+- Polygon Amoy deployment
+- Jest and Hardhat tests
+- End-to-end demonstration
 
-Member D — Data Module
+For setup, dependencies, testing, and demo instructions, please see:
 
-Main responsibilities:
+`readme.txt`
 
-1. Encrypt sensitive credential data before uploading it to IPFS.
-2. Decrypt credential data during the verification process.
-3. Ensure personally identifiable information is not stored directly on-chain.
-4. Generate a SHA-256 hash for blockchain integrity verification.
-5. Provide automated tests and demonstration data.
+For deployed smart contract addresses, please see:
 
-## Technologies Used
-
-- Node.js
-- Node.js built-in `crypto` module
-- AES-256-GCM authenticated encryption
-- SHA-256 hashing
-- Jest
-
-## Project Structure
-
-```text
-6452/
-├── scripts/
-│   └── dataModuleDemo.js
-├── src/
-│   └── data-module/
-│       ├── credentialData.js
-│       ├── demoData.js
-│       └── encryption.js
-├── test/
-│   └── encryption.test.js
-├── .gitignore
-├── package.json
-├── package-lock.json
-└── README.md
+`addresses.txt`
